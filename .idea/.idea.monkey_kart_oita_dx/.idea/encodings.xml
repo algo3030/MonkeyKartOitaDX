@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" addBOMForNewFiles="with BOM under Windows, with no BOM otherwise">
+    <file url="file://$PROJECT_DIR$/Assets/Script/Networking/Session/SessionManager.cs" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/MonkeyKart/Common/MonkeyKartApplication.cs" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/MonkeyKart/Lobby/ClientTextChatUI.cs" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/MonkeyKart/Lobby/ServerLobbyManager.cs" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Assets/Scripts/MonkeyKart/SceneManagement/SceneLoader.cs" charset="UTF-8" />
+  </component>
+</project>
