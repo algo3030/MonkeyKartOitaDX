@@ -9,7 +9,7 @@ namespace MonkeyKart.Home
 {
     public class ProfileManager
     {
-        const string DEFAULT_PLAYER_NAME = "–¼–³‚µ‚Ìƒ‚ƒ“ƒL[";
+        const string DEFAULT_PLAYER_NAME = "åç„¡ã—ã®ãƒ¢ãƒ³ã‚­ãƒ¼";
         const int MAX_NAME_LENGTH = 12;
         ReactiveProperty<string> playerName = new(DEFAULT_PLAYER_NAME);
         public IReadOnlyReactiveProperty<string> PlayerName => playerName;
@@ -17,8 +17,8 @@ namespace MonkeyKart.Home
 
         public Result<Unit, string> ChangeName(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) return "–¼‘O‚ª‹ó”’‚Å‚·";
-            if (name.Length >= MAX_NAME_LENGTH) return $"–¼‘O‚Í{MAX_NAME_LENGTH}•¶š‚Ü‚Å‚Å‚·";
+            if (string.IsNullOrWhiteSpace(name)) return "åå‰ãŒç©ºç™½ã§ã™";
+            if (name.Length >= MAX_NAME_LENGTH) return $"åå‰ã¯{MAX_NAME_LENGTH}æ–‡å­—ä»¥å†…ã«ã—ã¦ãã ã•ã„";
             playerName.Value = name;
             return Unit.Default;
         }
