@@ -10,8 +10,10 @@ namespace MonkeyKart.Common
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()
         {
+            /*
             if (SceneManager.GetActiveScene().name == MonkeyKartScenes.INITIALIZATION) return;
             SceneManager.LoadSceneAsync(MonkeyKartScenes.INITIALIZATION);
+            */
         }
     }
 }
