@@ -57,7 +57,6 @@ namespace MonkeyKart.GamePlaying
 
         void FixedUpdate()
         {
-            Log.d(TAG,"あ");
             // ステアリング
             var handle = 0f;
             if (playerInput.InputVector.x != 0f) handle = playerInput.InputVector.x;
