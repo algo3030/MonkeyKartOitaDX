@@ -1,16 +1,12 @@
-using System;
 using System.Linq;
-using MonkeyKart.Common;
 using MonkeyKart.GamePlaying.Checkpoint;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace MonkeyKart.GamePlaying
 {
     public class PlayerProgress : MonoBehaviour
     {
-        [SerializeField] CheckpointManager cpManager;
-        Rigidbody rb;
+        CheckpointManager cpManager;
 
         public int Laps{get; private set;}
         public float Progress {get; private set;}
@@ -20,10 +16,14 @@ namespace MonkeyKart.GamePlaying
 
         Vector3 velocity;
         Vector3 prevPos;
+
+        public void Init(CheckpointManager cpManager)
+        {
+            this.cpManager = cpManager;
+        }
         
         void Start()
         {
-            rb = GetComponent<Rigidbody>();
             prevPos = transform.position;
             SectionIdx = 0;
             passedCpPos = cpManager.CpPoses[0];
@@ -32,12 +32,11 @@ namespace MonkeyKart.GamePlaying
 
         public void PassCheckpoint(int passedCp)
         {
+            if (Mathf.Abs(passedCp - SectionIdx) >= 2) return;
+            
             var prevCpPos = cpManager.CpPoses.GetWithLoopedIndex(passedCp - 1);
             var currentCpPos = cpManager.CpPoses[passedCp];
             var nextCpPos = cpManager.CpPoses.GetWithLoopedIndex(passedCp + 1);
-
-            Debug.Log($"prevCp:{prevCpPos}");
-            Debug.Log($"nextCp:{nextCpPos}");
 
             var currentToNext = nextCpPos - currentCpPos;
             var currentToPrev = prevCpPos - currentCpPos;
@@ -71,7 +70,7 @@ namespace MonkeyKart.GamePlaying
             headingCpPos = cpManager.CpPoses.GetWithLoopedIndex(advancing ? passedCp + 1 : passedCp);
         }
 
-        void Update()
+        void FixedUpdate()
         {
             velocity = transform.position - prevPos;
             prevPos = transform.position;
@@ -98,11 +97,7 @@ namespace MonkeyKart.GamePlaying
             Progress =
             Laps * cpManager.Distances.Sum()
             + sectionDistance
-            + Mathf.Clamp(
-                Vector3.Dot(passedToHeading, passedToPlayer) / passedToHeading.magnitude,
-                0,
-                passedToHeading.magnitude
-                ); // セクション内の進捗
+            + Vector3.Dot(passedToHeading, passedToPlayer) / passedToHeading.magnitude; // セクション内の進捗
         }
     }
 }

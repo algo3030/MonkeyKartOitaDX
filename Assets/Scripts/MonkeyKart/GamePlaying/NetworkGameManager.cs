@@ -1,7 +1,6 @@
 using System;
 using Unity.Netcode;
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
@@ -9,8 +8,6 @@ using DG.Tweening;
 using MonkeyKart.Common;
 using MonkeyKart.GamePlaying.Input;
 using MonkeyKart.GamePlaying.UI;
-using Unity.Netcode.Components;
-using Unity.VisualScripting;
 
 namespace MonkeyKart.GamePlaying
 {
