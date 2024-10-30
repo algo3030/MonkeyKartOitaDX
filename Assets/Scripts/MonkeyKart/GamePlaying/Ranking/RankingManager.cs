@@ -8,21 +8,30 @@ namespace MonkeyKart.GamePlaying.Ranking
 {
     public class RankingManager : MonoBehaviour
     {
-        Subject<int> onRankingUpdated = new();
-        public IObservable<int> OnRankingUpdated => onRankingUpdated;
-        
-        List<PlayerProgress> progresses = new(); // index:0に自身のプログレス
+        ReactiveProperty<int> currentRank = new(-1);
+        public IReadOnlyReactiveProperty<int> CurrentRank => currentRank;
+        PlayerProgress localPlayerProgress;
 
-        public void Init(IReadOnlyList<PlayerProgress> progresses)
+        List<PlayerProgress> progresses = new();
+
+        public void AddPlayer(PlayerProgress progress, bool isLocalPlayer)
         {
-            this.progresses.AddRange(progresses);
-            
-            
+            if (isLocalPlayer)
+            {
+                localPlayerProgress = progress;
+                return;
+            }
+            progresses.Add(progress);
         }
 
         void FixedUpdate()
         {
-            progresses.Sort();
+            var rank = 1;
+            progresses.ForEach(p =>
+            {
+                if (p.Progress >= localPlayerProgress.Progress) rank++;
+            });
+            if (currentRank.Value != rank) currentRank.Value = rank;
         }
     }
 }

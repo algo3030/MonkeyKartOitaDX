@@ -18,7 +18,7 @@ EditorBuildSettings:
     path: Assets/Scene/Lobby.unity
     guid: 52091d3e8d96f4941a6fd9028b6fbc9e
   - enabled: 1
-    path: Assets/Scene/SampleScene.unity
+    path: Assets/Scripts/MonkeyKart/GamePlaying/Ranking
     guid: c850ee8c3b14cc8459e7e186857cf567
   - enabled: 1
     path: Assets/Scene/GameScene.unity

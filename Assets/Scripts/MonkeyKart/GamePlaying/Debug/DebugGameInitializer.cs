@@ -4,6 +4,8 @@ using MonkeyKart.GamePlaying.Input;
 using UnityEngine;
 using UniRx;
 using Unity.Netcode;
+using MonkeyKart.GamePlaying.Ranking;
+using System.Collections.Generic;
 
 namespace MonkeyKart.GamePlaying.Debug
 {
@@ -15,6 +17,9 @@ namespace MonkeyKart.GamePlaying.Debug
         [SerializeField] PlayerCamera playerCamera;
         [SerializeField] PlayerInput playerInput;
         [SerializeField] CheckpointManager cpManager;
+        [SerializeField] RankingManager rankingManager;
+        [SerializeField] PlayerProgress myPlayer;
+        [SerializeField] List<PlayerProgress> others;
 
         [SerializeField] SimpleButton startButton;
         void Awake()
@@ -22,7 +27,14 @@ namespace MonkeyKart.GamePlaying.Debug
             playerMovement.Init(playerInput);
             playerCamera.Init(playerRb);
             playerProgress.Init(cpManager);
-            
+
+            rankingManager.AddPlayer(myPlayer, true);
+            others.ForEach(p =>
+            {
+                p.Init(cpManager);
+                rankingManager.AddPlayer(p, false);
+            });
+
             startButton.OnClick.Subscribe(_ =>
             {
                 Initialize();

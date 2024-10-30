@@ -15,7 +15,7 @@ namespace MonkeyKart.GamePlaying
             previousPosition = transform.position;
         }
 
-        void Update()
+        void FixedUpdate()
         {
             CurrentVelocity = (transform.position - previousPosition) / Time.deltaTime;
             previousPosition = transform.position;

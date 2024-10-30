@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System;
+using Cysharp.Threading.Tasks;
 using MonkeyKart.Common;
 using MonkeyKart.GamePlaying.Input;
 using UnityEngine;
@@ -14,19 +15,19 @@ namespace MonkeyKart.GamePlaying
         
         const float MiniTurboThreshold = 1.5f;
         const float SuperTurboThreshold = 2.5f;
-        const float BaseAcceleration = 17f;
+        const float BaseAcceleration = 23f;
         const float DriftHorizontalMultiplier = 1.3f;
-        const float MaxSpeed = 20f;
+        const float MaxSpeed = 25f;
         
         IPlayerInputNotifier playerInput;
         Rigidbody rb;
-        const float RotationAcceleration = 600f;
+        const float RotationAcceleration = 750f;
 
         float maxSpeed = MaxSpeed;
         float acceleration = BaseAcceleration;
         public float Turbo { get; private set; }
         
-        float rotation;
+        float yRotation;
         float rotationSpeed;
 
         float inputVector;
@@ -44,7 +45,7 @@ namespace MonkeyKart.GamePlaying
 
         void Start()
         {
-            rotation = transform.rotation.eulerAngles.y;
+            yRotation = transform.rotation.eulerAngles.y;
             // TODO:ドリフト
             
             /*
@@ -55,6 +56,7 @@ namespace MonkeyKart.GamePlaying
             */
         }
 
+        float targetX;
         void FixedUpdate()
         {
             // ステアリング
@@ -63,15 +65,27 @@ namespace MonkeyKart.GamePlaying
             if (handle == 0f) rotationSpeed *= 0.5f; // ハンドリングを中央に近づける
             rotationSpeed += handle * RotationAcceleration * Time.fixedDeltaTime;
             rotationSpeed = Mathf.Clamp(rotationSpeed, 70f * handle, 70f * handle);
-            rotation += rotationSpeed * Time.fixedDeltaTime;
-            rb.MoveRotation(Quaternion.Euler(0,rotation,0));
+            yRotation += rotationSpeed * Time.fixedDeltaTime;
+            
+            if (Physics.Raycast(transform.position, Vector3.down, out var hit, 1.0f))
+            {
+                targetX = Quaternion.FromToRotation(Vector3.down, hit.normal).eulerAngles.x;
+            }
+            else
+            {
+                targetX = Mathf.LerpAngle(targetX, 0f, Time.fixedDeltaTime);
+            }
+
+            var currentX = transform.rotation.eulerAngles.x;
+            var moveX = Mathf.LerpAngle(currentX, targetX, 4f * Time.fixedDeltaTime);
+            rb.MoveRotation(Quaternion.Euler(moveX, yRotation,0));
             
             // 加速
             rb.AddForce(acceleration * transform.forward);
             rb.AddForce(Vector3.down * 10f);
             ClampVelocity();
         }
-        
+
         async UniTask Accelerate(float multiplier, float accelerateSeconds, float decelerateSeconds)
         {
             maxSpeed = MaxSpeed * multiplier;

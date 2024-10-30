@@ -1,5 +1,6 @@
 using System.Linq;
 using MonkeyKart.GamePlaying.Checkpoint;
+using UniRx;
 using UnityEngine;
 
 namespace MonkeyKart.GamePlaying
@@ -8,7 +9,8 @@ namespace MonkeyKart.GamePlaying
     {
         CheckpointManager cpManager;
 
-        public int Laps{get; private set;}
+        ReactiveProperty<int> laps = new();
+        public IReadOnlyReactiveProperty<int> Laps => laps;
         public float Progress {get; private set;}
         public int SectionIdx {get; private set;}
         Vector3 passedCpPos;
@@ -46,7 +48,7 @@ namespace MonkeyKart.GamePlaying
             
             if(SectionIdx >= 0)
             {
-                if(SectionIdx == cpManager.CpPoses.Count - 1 && advancing) Laps++;
+                if(SectionIdx == cpManager.CpPoses.Count - 1 && advancing) laps.Value++;
                 SectionIdx = advancing ? passedCp : passedCp - 1;
             }
             else
@@ -57,7 +59,7 @@ namespace MonkeyKart.GamePlaying
                 }
                 else if(SectionIdx == -cpManager.CpPoses.Count) // 逆周りで始点を抜ける
                 {
-                    if(!advancing) Laps--;
+                    if(!advancing) laps.Value--;
                     SectionIdx = advancing ? -cpManager.CpPoses.Count : -1;
                 }
                 else
@@ -95,7 +97,7 @@ namespace MonkeyKart.GamePlaying
             }
 
             Progress =
-            Laps * cpManager.Distances.Sum()
+            Laps.Value * cpManager.Distances.Sum()
             + sectionDistance
             + Vector3.Dot(passedToHeading, passedToPlayer) / passedToHeading.magnitude; // セクション内の進捗
         }
