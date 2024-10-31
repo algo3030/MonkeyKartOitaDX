@@ -1,6 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using MonkeyKart.Common;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,11 +17,6 @@ namespace MonkeyKart.GamePlaying.UI
         [SerializeField] Image countDownImg;
         [SerializeField] Image goImg;
         [SerializeField] CanvasGroup panelGroup;
-        
-        void Start()
-        {
-            countDownImg.enabled = false;
-        }
 
         void OnDestroy()
         {

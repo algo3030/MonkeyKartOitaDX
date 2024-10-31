@@ -20,7 +20,7 @@ using static UnityEngine.UI.GridLayoutGroup;
 namespace MonkeyKart.Networking.ConnectionManagement
 {
     /// <summary>
-    /// ConnectionState‚ÌƒXƒe[ƒgƒ}ƒVƒ“
+    /// ConnectionStateï¿½ÌƒXï¿½eï¿½[ï¿½gï¿½}ï¿½Vï¿½ï¿½
     /// </summary>
     public class ConnectionManager : MonoBehaviour
     {
@@ -39,7 +39,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
             DontDestroyOnLoad(gameObject);
         }
 
-        // ”FØ‚ğ‘–‚ç‚¹‚é
+        // ï¿½Fï¿½Ø‚ğ‘–‚ç‚¹ï¿½ï¿½
         public async UniTask<Result<Unit, string>> Initialize()
         {
             var authRes = await AuthAPI.InitializeAndSignInAsync();
@@ -97,15 +97,15 @@ namespace MonkeyKart.Networking.ConnectionManagement
         
         public Result<Unit, string> RequestShutdown()
         {
-            if (currentState.Value is not OnlineState) return "Connection state is not Online.";
-            (currentState.Value as OnlineState).OnUserRequestedShutDown(); 
+            if (currentState.Value is not OnlineState state) return "Connection state is not Online.";
+            state.OnUserRequestedShutDown(); 
             return Unit.Default;
         }
 
         public SessionManager GetSessionManager()
         {
-            if (currentState.Value is not HostingState) throw new InvalidOperationException();
-            return (currentState.Value as HostingState).SessionManager;
+            if (currentState.Value is not HostingState state) throw new InvalidOperationException();
+            return state.SessionManager;
         }
 
         // NetworkManager callbacks
@@ -131,12 +131,12 @@ namespace MonkeyKart.Networking.ConnectionManagement
 
         void OnTransportFailure()
         {
-            if (currentState.Value is not OnlineState)
+            if (currentState.Value is not OnlineState state)
             {
                 Log.w(TAG, "Current state is offline, but OnTransportFailure sended.");
                 return;
             }
-            (currentState.Value as OnlineState).OnTransportFailure();
+            state.OnTransportFailure();
         }
 
         void OnServerStopped(bool _)

@@ -6,8 +6,14 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using MonkeyKart.Common;
+using MonkeyKart.GamePlaying.Checkpoint;
 using MonkeyKart.GamePlaying.Input;
+using MonkeyKart.GamePlaying.Ranking;
 using MonkeyKart.GamePlaying.UI;
+using MonkeyKart.Networking.ConnectionManagement;
+using MonkeyKart.Networking.Session;
+using VContainer;
+using UniRx;
 
 namespace MonkeyKart.GamePlaying
 {
@@ -17,30 +23,40 @@ namespace MonkeyKart.GamePlaying
         Playing,
         Ended
     }
-    
+
     public class NetworkGameManager : NetworkBehaviour
     {
         const string TAG = "NetworkGameInitializer";
+
+        [Inject] ConnectionManager connectionManager;
+        SessionManager sessionManager;
+
         [SerializeField] GameObject playerPfb;
 
         [SerializeField] CanvasGroup gameCanvasGroup;
         [SerializeField] GameStartingUI gameStartingUI;
+        [SerializeField] GameEndingUI gameEndingUI;
         [SerializeField] PlayerInput playerInput;
         [SerializeField] PlayerCamera playerCamera;
         [SerializeField] GameObject stageCamera;
         [SerializeField] List<GameObject> spawnPoints;
+        
+        [SerializeField] CheckpointManager cpManager;
+        [SerializeField] RankingManager rankingManager;
 
         readonly Dictionary<ulong, bool> playersReady = new();
+        List<ulong> goaledPlayers = new();
         public NetworkVariable<GamePhase> currentPhase;
-        
+
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
             currentPhase.Value = GamePhase.Initializing;
             currentPhase.OnValueChanged += OnGamePhaseChanged;
+            sessionManager = connectionManager.GetSessionManager();
             if (IsServer) ServerInitializeGame();
         }
-        
+
         // クライアントがゲーム状態の変化を受け取るコールバック
         void OnGamePhaseChanged(GamePhase prev, GamePhase current)
         {
@@ -61,12 +77,14 @@ namespace MonkeyKart.GamePlaying
 
         void ClientStartGame()
         {
-            var player = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.Singleton.LocalClientId);
+            var player =
+                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.Singleton.LocalClientId);
             player.GetComponent<PlayerMovement>().enabled = true;
+            
             playerCamera.enabled = true;
             gameCanvasGroup.DOFade(1, 0.5f);
         }
-        
+
         public override void OnNetworkDespawn()
         {
             currentPhase.OnValueChanged -= OnGamePhaseChanged;
@@ -80,11 +98,13 @@ namespace MonkeyKart.GamePlaying
             // まずサーバがクライアント分のプレイヤーをスポーンさせる
             for (int i = 0; i < clients.Count; i++)
             {
-                ServerSpawnPlayer(clients[i].ClientId, spawnPoints[i].transform.position, spawnPoints[i].transform.rotation);
+                ServerSpawnPlayer(clients[i].ClientId, spawnPoints[i].transform.position,
+                    spawnPoints[i].transform.rotation);
             }
+
             SetUpClientRpc();　// その後、スポーンした自機プレイヤーをクライアント側が特定し、クライアント側のカメラなどをセットアップ。
         }
-        
+
         void ServerSpawnPlayer(ulong targetClientId, Vector3 position, Quaternion rotation)
         {
             playersReady[targetClientId] = false;
@@ -96,9 +116,32 @@ namespace MonkeyKart.GamePlaying
         void SetUpClientRpc()
         {
             // 自機を取得
-            var player = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.Singleton.LocalClientId);
+            var player =
+                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.Singleton.LocalClientId);
             playerCamera.Init(player.GetComponent<Rigidbody>()); // カメラにRigidbodyを注入
             player.GetComponent<PlayerMovement>().Init(playerInput); // PlayerMovementに入力を注入
+            
+            // プログレス
+            var localProgress = player.GetComponent<PlayerProgress>();
+            localProgress.Init(cpManager);
+            localProgress.Laps.Subscribe(lap =>
+            {
+                if (lap == 2)
+                {
+                    gameEndingUI.ShowFinishUI();
+                    SendGoalServerRpc();
+                }
+            }).AddTo(this);
+            rankingManager.AddPlayer(localProgress, true);
+            foreach (var pid in NetworkManager.Singleton.ConnectedClientsIds)
+            {
+                if(pid == NetworkManager.Singleton.LocalClientId) continue;
+                var prog = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(pid)
+                    .GetComponent<PlayerProgress>();
+                prog.Init(cpManager);
+                rankingManager.AddPlayer(prog,false);
+            }
+            
             ClientPrepareGame().Forget();
         }
 
@@ -113,6 +156,7 @@ namespace MonkeyKart.GamePlaying
             SendReadyServerRpc();
         }
 
+        // 開始処理
         // サーバはクライアント全員が準備完了した際に、ゲームをスタートさせる。
         [ServerRpc(RequireOwnership = false)]
         void SendReadyServerRpc(ServerRpcParams serverRpcParams = default)
@@ -133,6 +177,32 @@ namespace MonkeyKart.GamePlaying
         void ShowGameStartUIClientRpc()
         {
             gameStartingUI.CountDown().Forget();
+        }
+
+        // 終了処理
+        [ServerRpc(RequireOwnership = false)]
+        void SendGoalServerRpc(ServerRpcParams serverRpcParams = default)
+        {
+            goaledPlayers.Add(serverRpcParams.Receive.SenderClientId);
+            if (goaledPlayers.Count == NetworkManager.ConnectedClientsIds.Count) ServerEndGame();
+        }
+
+        async void ServerEndGame()
+        {
+            currentPhase.Value = GamePhase.Ended;
+            await UniTask.Delay(1000);
+            ShowResultUIClientRpc();
+        }
+
+        [ClientRpc]
+        void ShowResultUIClientRpc(ClientRpcParams rpcParams = default)
+        {
+            List<string> goaledPlayerNames = new();
+            foreach (var id in goaledPlayers)
+            {
+                sessionManager.GetPlayerData(id).OnSuccess(data => goaledPlayerNames.Add(data.PlayerName));
+            }
+            gameEndingUI.ShowResultUI(goaledPlayerNames, NetworkManager.Singleton.LocalClientId);
         }
     }
 }
