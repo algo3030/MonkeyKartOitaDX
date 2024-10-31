@@ -19,6 +19,7 @@ namespace MonkeyKart.GamePlaying.Debug
         [SerializeField] CheckpointManager cpManager;
         [SerializeField] RankingManager rankingManager;
         [SerializeField] PlayerProgress myPlayer;
+        [SerializeField] LapDisplay lapDisplay;
         [SerializeField] List<PlayerProgress> others;
 
         [SerializeField] SimpleButton startButton;
@@ -27,7 +28,8 @@ namespace MonkeyKart.GamePlaying.Debug
             playerMovement.Init(playerInput);
             playerCamera.Init(playerRb);
             playerProgress.Init(cpManager);
-
+            lapDisplay.Init(playerProgress);
+            
             rankingManager.AddPlayer(myPlayer, true);
             others.ForEach(p =>
             {

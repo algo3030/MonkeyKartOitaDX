@@ -7,7 +7,7 @@ namespace MonkeyKart.LobbyScene
     public struct LobbyPlayerState : INetworkSerializable, IEquatable<LobbyPlayerState>
     {
         public ulong ClientId;
-        private FixedPlayerName playerName;
+        FixedPlayerName playerName;
         public FixedPlayerName PlayerName => playerName;
 
         public LobbyPlayerState(ulong clientId, string name)

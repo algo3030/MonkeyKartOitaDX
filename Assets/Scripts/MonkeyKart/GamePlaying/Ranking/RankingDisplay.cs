@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace MonkeyKart.GamePlaying.Ranking
@@ -11,7 +12,7 @@ namespace MonkeyKart.GamePlaying.Ranking
         [SerializeField] RankingManager rankingManager;
         [SerializeField] List<Sprite> rankingSprites;
         [SerializeField] Image rankingImage;
-        [SerializeField] AudioSource audio;
+        [SerializeField] AudioSource rankAudio;
         [SerializeField] AudioClip updateRankingSE;
 
         void Start()
@@ -24,7 +25,7 @@ namespace MonkeyKart.GamePlaying.Ranking
                 transform.localRotation = Quaternion.Euler(0,0,-90);
                 transform.DOScale(1.0f, 0.2f).SetEase(Ease.OutExpo);
                 transform.DORotate(new Vector3(0, 0, 0), 0.2f).SetEase(Ease.OutExpo);
-                audio.PlayOneShot(updateRankingSE);
+                rankAudio.PlayOneShot(updateRankingSE);
             }).AddTo(this);
         }
     }

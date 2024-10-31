@@ -9,7 +9,7 @@ namespace MonkeyKart.GamePlaying
     {
         CheckpointManager cpManager;
 
-        ReactiveProperty<int> laps = new();
+        readonly ReactiveProperty<int> laps = new();
         public IReadOnlyReactiveProperty<int> Laps => laps;
         public float Progress {get; private set;}
         public int SectionIdx {get; private set;}
@@ -22,19 +22,21 @@ namespace MonkeyKart.GamePlaying
         public void Init(CheckpointManager cpManager)
         {
             this.cpManager = cpManager;
-        }
-        
-        void Start()
-        {
-            prevPos = transform.position;
             SectionIdx = 0;
             passedCpPos = cpManager.CpPoses[0];
             headingCpPos = cpManager.CpPoses[1];
         }
+        
+        int GetLoopedDistance(int index1, int index2, int arrayLength)
+        {
+            int directDistance = Mathf.Abs(index1 - index2);
+            int loopingDistance = arrayLength - directDistance;
+            return Mathf.Min(directDistance, loopingDistance);
+        }
 
         public void PassCheckpoint(int passedCp)
         {
-            if (Mathf.Abs(passedCp - SectionIdx) >= 2) return;
+            if (GetLoopedDistance(passedCp,SectionIdx,cpManager.CpPoses.Count) >= 2) return;
             
             var prevCpPos = cpManager.CpPoses.GetWithLoopedIndex(passedCp - 1);
             var currentCpPos = cpManager.CpPoses[passedCp];
@@ -44,27 +46,32 @@ namespace MonkeyKart.GamePlaying
             var currentToPrev = prevCpPos - currentCpPos;
             var toNextAngle = Vector3.Angle(velocity, currentToNext);
             var toPrevAngle = Vector3.Angle(velocity, currentToPrev);
-            bool advancing = toNextAngle < toPrevAngle;
+            var advancing = toNextAngle < toPrevAngle;
             
-            if(SectionIdx >= 0)
+            switch (SectionIdx)
             {
-                if(SectionIdx == cpManager.CpPoses.Count - 1 && advancing) laps.Value++;
-                SectionIdx = advancing ? passedCp : passedCp - 1;
-            }
-            else
-            {
-                if(SectionIdx == -1)
+                case >= 0:
                 {
+                    if (SectionIdx == cpManager.CpPoses.Count - 1 && advancing) laps.Value++;
+                    SectionIdx = advancing ? passedCp : passedCp - 1;
+                    break;
+                }
+                case -1:
                     SectionIdx = advancing ? 0 : -2;
-                }
-                else if(SectionIdx == -cpManager.CpPoses.Count) // 逆周りで始点を抜ける
+                    break;
+                default:
                 {
-                    if(!advancing) laps.Value--;
-                    SectionIdx = advancing ? -cpManager.CpPoses.Count : -1;
-                }
-                else
-                {
-                    SectionIdx = advancing ? passedCp - cpManager.CpPoses.Count : passedCp - cpManager.CpPoses.Count - 1;
+                    if(SectionIdx == -cpManager.CpPoses.Count) // 逆周りで始点を抜ける
+                    {
+                        if(!advancing) laps.Value--;
+                        SectionIdx = advancing ? -cpManager.CpPoses.Count : -1;
+                    }
+                    else
+                    {
+                        SectionIdx = advancing ? passedCp - cpManager.CpPoses.Count : passedCp - cpManager.CpPoses.Count - 1;
+                    }
+
+                    break;
                 }
             }
 
