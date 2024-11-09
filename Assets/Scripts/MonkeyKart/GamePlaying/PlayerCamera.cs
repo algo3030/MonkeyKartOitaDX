@@ -18,7 +18,7 @@ namespace MonkeyKart.GamePlaying
         {
             pivotTfm.position = playerRb.position;
 
-            if (-playerRb.velocity == Vector3.zero) return;
+            if (playerRb.velocity.magnitude <= 0.01f) return;
             var lookRot = Quaternion.LookRotation(-playerRb.velocity);
             var targetEulerAngles = lookRot.eulerAngles;
             targetEulerAngles.x = 0f;

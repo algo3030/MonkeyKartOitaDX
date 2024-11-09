@@ -56,8 +56,7 @@ namespace MonkeyKart.SceneManagement
             }
             base.OnDestroy();
         }
-
-        // �I�t���C���ł̃��[�h
+        
         void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
         {
             if (!IsSpawned || NetworkManager.ShutdownInProgress)
@@ -96,7 +95,6 @@ namespace MonkeyKart.SceneManagement
         {
             if(useNetworkSceneManager && IsSpawned && IsNetworkSceneManagementEnabled && !NetworkManager.ShutdownInProgress) 
             {
-                // �I�����C���Ń��[�h
                 if (NetworkManager.IsServer)
                 {
                     sceneLoadingCanvas.Show();
@@ -105,7 +103,6 @@ namespace MonkeyKart.SceneManagement
             }
             else
             {
-                // �I�t���C���Ń��[�h
                 if (loadSceneMode == LoadSceneMode.Single)
                 {
                     sceneLoadingCanvas.Show();
@@ -118,7 +115,7 @@ namespace MonkeyKart.SceneManagement
         {
             UniTask.Create(async () =>
             {
-                await UniTask.Delay(1000);
+                await UniTask.Delay(800);
                 sceneLoadingCanvas.Hide();
             }).Forget();
         }
@@ -130,7 +127,7 @@ namespace MonkeyKart.SceneManagement
 
             switch (sceneEvent.SceneEventType)
             {
-                case SceneEventType.Load: // NOTE: ���[�h�������ƌĂ΂�Ȃ��Ƃ�������
+                case SceneEventType.Load: // NOTE:
                     if (NetworkManager.IsClient)
                     {
                         sceneLoadingCanvas.Show();

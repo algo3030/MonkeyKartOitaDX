@@ -7,15 +7,25 @@ namespace MonkeyKart.GamePlaying
     public class MovementArrow : MonoBehaviour
     {
         [SerializeField] Vector3 offset;
-        [SerializeField] PlayerInput input;
-        
+        PlayerInput input;
+
         const float MAX_ANGLE_X = 45f;
-        const float MAX_ANGLE_Y = 75f;
-        bool shouldApplyYInput;
+
+        public void Init(PlayerInput input)
+        {
+            this.input = input;
+        }
 
         void LateUpdate()
         {
-            var targetRotation = Quaternion.Euler(shouldApplyYInput ? input.InputVector.y * MAX_ANGLE_X : 0f, input.InputVector.x * MAX_ANGLE_Y, 0);
+            if (input == null)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
+            var targetRotation 
+                = Quaternion.Euler(0f, Mathf.Acos(-input.InputVector.x) * Mathf.Rad2Deg + 270f, 0);
             transform.localRotation = Quaternion.Slerp(transform.localRotation, targetRotation, Time.deltaTime * 10f);
         }
     }

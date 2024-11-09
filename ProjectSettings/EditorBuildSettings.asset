@@ -5,6 +5,9 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 0
+    path: Assets/Scene/DebugGameScene.unity
+    guid: b19c8ef1bac404c6e95d70b6c332cd60
   - enabled: 1
     path: Assets/Scene/Initialization.unity
     guid: 560243ad6bdfca24ea01324d7ff3237c
@@ -17,15 +20,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scene/Lobby.unity
     guid: 52091d3e8d96f4941a6fd9028b6fbc9e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scripts/MonkeyKart/GamePlaying/Ranking
     guid: c850ee8c3b14cc8459e7e186857cf567
   - enabled: 1
     path: Assets/Scene/GameScene.unity
     guid: 657be9fcad3a8484c9199b18a2c862b6
-  - enabled: 1
-    path: Assets/Scene/DebugGameScene.unity
-    guid: 25b653aba41e614d2a360eea52b1ac9c
   m_configObjects:
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: 3bcaae2c7b516654e816c6e070fbca39,
       type: 2}

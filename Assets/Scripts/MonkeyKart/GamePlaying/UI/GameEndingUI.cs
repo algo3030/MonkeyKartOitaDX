@@ -30,11 +30,11 @@ namespace MonkeyKart.GamePlaying.UI
             finishImg.DOFade(0f, 0.3f);
         }
 
-        public void ShowResultUI(IReadOnlyList<string> names, ulong localPlayerIdx) // 順位順
+        public void ShowResultUI(IReadOnlyList<string> names, int localPlayerIdx) // 順位順
         {
             for (int i = 0; i < names.Count; i++)
             {
-                if (i == (int)localPlayerIdx) holders[i].color = Colors.Scarlet;
+                if (i == localPlayerIdx) holders[i].color = Colors.FromHex("#FF8700");
                 playerNames[i].text = names[i];
             }
             

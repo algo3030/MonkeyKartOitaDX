@@ -18,6 +18,8 @@ namespace MonkeyKart.LobbyScene
     {
         const string TAG = "ServerLobbyManager";
 
+        public static ServerLobbyManager I;
+
         [Inject] ConnectionManager connectionManager;
         [Inject] SceneLoader sceneLoader;
         SessionManager sessionManager;
@@ -27,6 +29,7 @@ namespace MonkeyKart.LobbyScene
 
         public NetworkList<FixedString128Bytes> ChatTexts { get; private set; }
 
+        // どうやらインスタンスフィールドで初期化するとエディタ上でもインスタンス化されてしまうようなので
         private void Awake()
         {
             LobbyPlayers = new();
@@ -37,6 +40,17 @@ namespace MonkeyKart.LobbyScene
         {
             base.OnNetworkSpawn();
 
+            if(I == null)
+            {
+                I = this;
+            }
+            else
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            DontDestroyOnLoad(gameObject);
             if (!NetworkManager.Singleton.IsServer)
             {
                 enabled = false;
@@ -49,6 +63,17 @@ namespace MonkeyKart.LobbyScene
             connectionManager.networkManager.OnClientDisconnectCallback += OnClientDisconnected;
         }
 
+        public LobbyPlayerState GetPlayerState(ulong clientId){
+            foreach (var p in LobbyPlayers)
+            {
+                if(p.ClientId == clientId)
+                {
+                    return p;
+                }
+            }
+            throw new ArgumentException();
+        }
+
         public void StartGame()
         {
             sceneLoader.LoadScene(MonkeyKartScenes.GAME, true);
@@ -59,6 +84,7 @@ namespace MonkeyKart.LobbyScene
             base.OnNetworkDespawn();
             connectionManager.networkManager.SceneManager.OnSceneEvent -= OnSceneEvent;
             connectionManager.networkManager.OnClientDisconnectCallback -= OnClientDisconnected;
+            Destroy(gameObject);
         }
 
         // XXX: �����T�C�Y
@@ -78,7 +104,7 @@ namespace MonkeyKart.LobbyScene
         void AddNewPlayer(ulong clientId)
         {
             sessionManager.GetPlayerData(clientId)
-                .OnFailure(_ => throw new Exception()) // ���蓾�Ȃ�
+                .OnFailure(_ => throw new Exception())
                 .OnSuccess(playerData =>
                 {
                     LobbyPlayers.Add(new LobbyPlayerState(playerData.ClientId, playerData.PlayerName));
@@ -89,6 +115,11 @@ namespace MonkeyKart.LobbyScene
         void OnSceneEvent(SceneEvent sceneEvent)
         {
             if (sceneEvent.SceneEventType != SceneEventType.LoadComplete) return;
+
+            foreach(var p in LobbyPlayers)
+            {
+                if(p.ClientId == sceneEvent.ClientId) return; // 重複してたら追加しない
+            }
             AddNewPlayer(sceneEvent.ClientId);
         }
 

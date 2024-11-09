@@ -9,14 +9,12 @@ namespace MonkeyKart.LobbyScene
     {
         [SerializeField] DialogSpawner dialogManager;
         [SerializeField] ClientLobbyUI lobbyUIMediator;
-        [SerializeField] ServerLobbyManager serverLobbyManager;
 
         protected override void Configure(IContainerBuilder builder)
         {
             base.Configure(builder);
             builder.RegisterComponent(dialogManager);
             builder.RegisterComponent(lobbyUIMediator);
-            builder.RegisterComponent(serverLobbyManager);
         }
     }
 }

@@ -16,18 +16,22 @@ public class TitleUIMediator : MonoBehaviour
     [Inject] DialogSpawner dialogSpawner;
 
     [SerializeField] SimpleButton tapAreaBtn;
+    bool connecting = false;
 
     void Start()
     {
         tapAreaBtn.OnClick.Subscribe(async _ =>
         {
+            if (connecting) return;
+            connecting = true;
             (await connectionManager.Initialize())
             .OnFailure(_ =>
             {
+                connecting = false;
                 dialogSpawner.SpawnAlertDialog(
                 new DialogOptions()
-                .SetTitle(new MessageTitle(message: "�ڑ����s", bgColor: Colors.Scarlet))
-                .SetBody(new MessageBody(message: "�F�؂Ɏ��s���܂����B"))
+                .SetTitle(new MessageTitle(message: "接続失敗", bgColor: Colors.Scarlet))
+                .SetBody(new MessageBody(message: "ログインに失敗しました。"))
                 .SetPadding(DialogPaddings.Wide)
                 );
             });

@@ -10,7 +10,7 @@ namespace MonkeyKart.LobbyScene
 {
 	class StartGameButton : NetworkBehaviour
 	{
-		[Inject] ServerLobbyManager serverLobbyManager;
+		ServerLobbyManager serverLobbyManager;
 		[SerializeField] GameObject disableImg;
         [SerializeField] UIShiny shiny;
         [SerializeField] SimpleButton btn;
@@ -18,6 +18,8 @@ namespace MonkeyKart.LobbyScene
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
+
+            serverLobbyManager = ServerLobbyManager.I;
 
             if (!NetworkManager.Singleton.IsServer)
             {

@@ -12,16 +12,17 @@ namespace MonkeyKart.GamePlaying
     public class PlayerMovement : MonoBehaviour
     {
         const string TAG = "PlayerMovement";
-        
+
+        [SerializeField] PlayerAudio playerAudio;
         const float MiniTurboThreshold = 1.5f;
         const float SuperTurboThreshold = 2.5f;
-        const float BaseAcceleration = 23f;
+        const float BaseAcceleration = 30f;
         const float DriftHorizontalMultiplier = 1.3f;
-        const float MaxSpeed = 25f;
+        const float MaxSpeed = 23f;
         
         IPlayerInputNotifier playerInput;
         Rigidbody rb;
-        const float RotationAcceleration = 750f;
+        const float RotationAcceleration = 20 * 1000f;
 
         float maxSpeed = MaxSpeed;
         float acceleration = BaseAcceleration;
@@ -40,25 +41,44 @@ namespace MonkeyKart.GamePlaying
         void Awake()
         {
             rb = GetComponent<Rigidbody>();
-           
+        }
+
+        void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag(MonkeyKartTags.DashBoard)) Dash();
+            else if (other.CompareTag("Kabosu"))
+            {
+                
+                Stun(3000).Forget();
+            }
+        }
+
+        public async UniTask Stun(int ms)
+        {
+            playerAudio.MakeDamageSE(); 
+            maxSpeed = 0f;
+            await UniTask.Delay(ms);
+            maxSpeed = MaxSpeed;
+        }
+        
+        public void Dash()
+        {
+            Accelerate(2.0f, 1.0f, 1.0f).Forget();
+            playerAudio.MakeDashSE();
         }
 
         void Start()
         {
             yRotation = transform.rotation.eulerAngles.y;
+            rb.useGravity = true;
             // TODO:ドリフト
-            
-            /*
-            input.OnDriftReleased.Subscribe(_ =>
-            {
-                Accelerate(2.0f, 1.0f, 0.5f).Forget();
-            }).AddTo(this);
-            */
         }
 
         float targetX;
         void FixedUpdate()
         {
+            //if (playerInput.InputVector.magnitude == 0) return;
+            
             // ステアリング
             var handle = 0f;
             if (playerInput.InputVector.x != 0f) handle = playerInput.InputVector.x;
@@ -67,9 +87,12 @@ namespace MonkeyKart.GamePlaying
             rotationSpeed = Mathf.Clamp(rotationSpeed, 70f * handle, 70f * handle);
             yRotation += rotationSpeed * Time.fixedDeltaTime;
             
-            if (Physics.Raycast(transform.position, Vector3.down, out var hit, 1.0f))
+            if (Physics.Raycast(transform.position, Vector3.down, out var hit, 1.5f))
             {
-                targetX = Quaternion.FromToRotation(Vector3.down, hit.normal).eulerAngles.x;
+                var rot = Quaternion.FromToRotation(Vector3.up, hit.normal);
+                var euler = (rot * transform.rotation).eulerAngles;
+                euler.x = (euler.x > 180) ? euler.x - 360 : euler.x;
+                targetX = euler.x / 2f;
             }
             else
             {
@@ -77,12 +100,12 @@ namespace MonkeyKart.GamePlaying
             }
 
             var currentX = transform.rotation.eulerAngles.x;
-            var moveX = Mathf.LerpAngle(currentX, targetX, 4f * Time.fixedDeltaTime);
+            var moveX = Mathf.LerpAngle(currentX, targetX, 10f * Time.fixedDeltaTime);
             rb.MoveRotation(Quaternion.Euler(moveX, yRotation,0));
             
             // 加速
             rb.AddForce(acceleration * transform.forward);
-            rb.AddForce(Vector3.down * 10f);
+            rb.AddForce(Vector3.down * 20f);
             ClampVelocity();
         }
 

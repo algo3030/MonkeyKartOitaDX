@@ -10,10 +10,11 @@ using MonkeyKart.GamePlaying.Checkpoint;
 using MonkeyKart.GamePlaying.Input;
 using MonkeyKart.GamePlaying.Ranking;
 using MonkeyKart.GamePlaying.UI;
-using MonkeyKart.Networking.ConnectionManagement;
-using MonkeyKart.Networking.Session;
 using VContainer;
 using UniRx;
+using MonkeyKart.LobbyScene;
+using MonkeyKart.SceneManagement;
+using Unity.VisualScripting;
 
 namespace MonkeyKart.GamePlaying
 {
@@ -28,10 +29,11 @@ namespace MonkeyKart.GamePlaying
     {
         const string TAG = "NetworkGameInitializer";
 
-        [Inject] ConnectionManager connectionManager;
-        SessionManager sessionManager;
 
+        [Inject] SceneLoader sceneLoader;
         [SerializeField] GameObject playerPfb;
+        
+        [SerializeField] GameObject playerNameDisplayPfb;
 
         [SerializeField] CanvasGroup gameCanvasGroup;
         [SerializeField] GameStartingUI gameStartingUI;
@@ -43,18 +45,33 @@ namespace MonkeyKart.GamePlaying
         
         [SerializeField] CheckpointManager cpManager;
         [SerializeField] RankingManager rankingManager;
+        [SerializeField] GameAudioManager audioManager;
+        [SerializeField] LapUI lapDisplay;
+        [SerializeField] ProgressIndicator indicator;
+        [SerializeField] ItemManager itemManager;
+
+        List<PlayerProgress> progresses = new();
 
         readonly Dictionary<ulong, bool> playersReady = new();
-        List<ulong> goaledPlayers = new();
+        NetworkList<ulong> goaledPlayers;
         public NetworkVariable<GamePhase> currentPhase;
+
+        private PlayerMovement localPlayerMovement;
+
+        void Awake()
+        {
+            goaledPlayers = new();
+            gameCanvasGroup.alpha = 0f;
+            rankingManager.enabled = false;
+        }
 
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
             currentPhase.Value = GamePhase.Initializing;
             currentPhase.OnValueChanged += OnGamePhaseChanged;
-            sessionManager = connectionManager.GetSessionManager();
             if (IsServer) ServerInitializeGame();
+            SetUp();
         }
 
         // クライアントがゲーム状態の変化を受け取るコールバック
@@ -75,13 +92,18 @@ namespace MonkeyKart.GamePlaying
             }
         }
 
-        void ClientStartGame()
+        async void ClientStartGame()
         {
+            progresses.ForEach(p => p.enabled = true); // プログレスの有効化
             var player =
                 NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.Singleton.LocalClientId);
-            player.GetComponent<PlayerMovement>().enabled = true;
-            
+            localPlayerMovement = player.GetComponent<PlayerMovement>();
+            localPlayerMovement.enabled = true; // 移動の有効化
             playerCamera.enabled = true;
+
+            audioManager.SetBGM(audioManager.RaceBGM, delayMs: 800);
+            await UniTask.Delay(1000);
+            rankingManager.enabled = true; // ランキング判定の有効化
             gameCanvasGroup.DOFade(1, 0.5f);
         }
 
@@ -101,8 +123,6 @@ namespace MonkeyKart.GamePlaying
                 ServerSpawnPlayer(clients[i].ClientId, spawnPoints[i].transform.position,
                     spawnPoints[i].transform.rotation);
             }
-
-            SetUpClientRpc();　// その後、スポーンした自機プレイヤーをクライアント側が特定し、クライアント側のカメラなどをセットアップ。
         }
 
         void ServerSpawnPlayer(ulong targetClientId, Vector3 position, Quaternion rotation)
@@ -112,33 +132,59 @@ namespace MonkeyKart.GamePlaying
             ins.GetComponent<NetworkObject>().SpawnAsPlayerObject(targetClientId);
         }
 
-        [ClientRpc]
-        void SetUpClientRpc()
+        void SetUp()
         {
             // 自機を取得
-            var player =
+            var localPlayer =
                 NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(NetworkManager.Singleton.LocalClientId);
-            playerCamera.Init(player.GetComponent<Rigidbody>()); // カメラにRigidbodyを注入
-            player.GetComponent<PlayerMovement>().Init(playerInput); // PlayerMovementに入力を注入
+            var localPlayerRb = localPlayer.GetComponent<Rigidbody>();
+            playerCamera.Init(localPlayerRb); // カメラにRigidbodyを注入
+            itemManager.Init(localPlayerRb);
+            localPlayer.GetComponent<PlayerMovement>().Init(playerInput); // PlayerMovementに入力を注入
+            var arrow = localPlayer.GetComponentInChildren<MovementArrow>();
+            arrow.Init(playerInput);
+            arrow.enabled = true;
+            
             
             // プログレス
-            var localProgress = player.GetComponent<PlayerProgress>();
+            var localProgress = localPlayer.GetComponent<PlayerProgress>();
+            progresses.Add(localProgress);
             localProgress.Init(cpManager);
+            lapDisplay.Init(localProgress);
+            indicator.Init(localProgress);
+
             localProgress.Laps.Subscribe(lap =>
             {
-                if (lap == 2)
-                {
-                    gameEndingUI.ShowFinishUI();
-                    SendGoalServerRpc();
-                }
+                if (lap == 2) ClientEndGame();
             }).AddTo(this);
+            
             rankingManager.AddPlayer(localProgress, true);
-            foreach (var pid in NetworkManager.Singleton.ConnectedClientsIds)
+
+            var objs = GameObject.FindGameObjectsWithTag("Player");
+            foreach (var p in objs)
             {
-                if(pid == NetworkManager.Singleton.LocalClientId) continue;
-                var prog = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(pid)
-                    .GetComponent<PlayerProgress>();
+                /*
+                var net = p.GetComponent<NetworkObject>();
+                var pid = net.OwnerClientId;
+                if (pid != NetworkManager.Singleton.LocalClientId)
+                {
+                    var playerName = ServerLobbyManager.I.GetPlayerState(pid).PlayerName;
+                    // 名前表示の有効化
+                    Instantiate(playerNameDisplayPfb,gameCanvasGroup.transform).GetComponent<PlayerNameDisplay>().Init(
+                        net.transform,
+                        pid,
+                        playerName
+                    );
+                }
+                */
+                
+                if(p == localPlayer.gameObject) continue;
+
+                Log.d(TAG,"Setting new player.");
+                var prog = p.GetComponent<PlayerProgress>();
+                progresses.Add(prog);
                 prog.Init(cpManager);
+                prog.enabled = true;
                 rankingManager.AddPlayer(prog,false);
             }
             
@@ -148,11 +194,13 @@ namespace MonkeyKart.GamePlaying
         // カメラ移動などを済ませ、サーバに準備完了RPCを送信する。
         async UniTask ClientPrepareGame()
         {
+            audioManager.PlayBGM(audioManager.CourceIntroBGM); // BGM
             gameStartingUI.ShowCourseUI();
-            await stageCamera.transform.DOMoveZ(30, 10f).AsyncWaitForCompletion();
+            await stageCamera.transform.DOMoveZ(30, 11f).AsyncWaitForCompletion();
             await gameStartingUI.HideCourseUI();
             playerCamera.gameObject.SetActive(true);
             stageCamera.gameObject.SetActive(false);
+            await UniTask.Delay(1000);
             SendReadyServerRpc();
         }
 
@@ -167,19 +215,38 @@ namespace MonkeyKart.GamePlaying
 
         async void ServerStartGame()
         {
-            ShowGameStartUIClientRpc();
+            CountDownClientRpc();
             // ここから3秒後に強制的に始める。準備の同期を取るのはカウントダウン前にする（カウントダウン後にラグがあると不自然なので）
             await UniTask.Delay(3000);
             currentPhase.Value = GamePhase.Playing; // ゲームを開始する。
         }
 
         [ClientRpc]
-        void ShowGameStartUIClientRpc()
+        void CountDownClientRpc()
         {
-            gameStartingUI.CountDown().Forget();
+            ClientCountDown();
+        }
+
+        async void ClientCountDown()
+        {
+            audioManager.MakeSE(audioManager.CountDownSE); // SE
+            await gameStartingUI.CountDown();
         }
 
         // 終了処理
+        void ClientEndGame()
+        {
+            audioManager.MakeSE(audioManager.GoalSE);
+            localPlayerMovement.enabled = false;
+            rankingManager.enabled = false;
+            gameEndingUI.ShowFinishUI();
+            gameCanvasGroup.DOFade(0, 0.5f);
+            SendGoalServerRpc();
+
+            audioManager.SetBGMVolume(0f, 1f).Forget();
+            audioManager.SetBGM(audioManager.PostGoalBGM, delayMs: 1500);
+        }
+
         [ServerRpc(RequireOwnership = false)]
         void SendGoalServerRpc(ServerRpcParams serverRpcParams = default)
         {
@@ -190,19 +257,30 @@ namespace MonkeyKart.GamePlaying
         async void ServerEndGame()
         {
             currentPhase.Value = GamePhase.Ended;
-            await UniTask.Delay(1000);
+            await UniTask.Delay(3000);
             ShowResultUIClientRpc();
+            await UniTask.Delay(10000);
+
+            var clients = NetworkManager.Singleton.ConnectedClientsList;
+            playerCamera.enabled = false;
+            // プレイヤーはシーン間で引き継がれてしまうのでDespawn
+            for (int i = 0; i < clients.Count; i++)
+            {
+                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clients[i].ClientId).Despawn();
+            }
+
+            sceneLoader.LoadScene(MonkeyKartScenes.LOBBY, true);
         }
 
         [ClientRpc]
-        void ShowResultUIClientRpc(ClientRpcParams rpcParams = default)
+        void ShowResultUIClientRpc()
         {
             List<string> goaledPlayerNames = new();
             foreach (var id in goaledPlayers)
             {
-                sessionManager.GetPlayerData(id).OnSuccess(data => goaledPlayerNames.Add(data.PlayerName));
+                goaledPlayerNames.Add(ServerLobbyManager.I.GetPlayerState(id).PlayerName);
             }
-            gameEndingUI.ShowResultUI(goaledPlayerNames, NetworkManager.Singleton.LocalClientId);
+            gameEndingUI.ShowResultUI(goaledPlayerNames, goaledPlayers.IndexOf(NetworkManager.Singleton.LocalClientId));
         }
     }
 }

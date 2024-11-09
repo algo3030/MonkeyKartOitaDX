@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UniRx;
 using UnityEngine;
 using System.Linq;
+using MonkeyKart.Common;
 
 namespace MonkeyKart.GamePlaying.Ranking
 {
@@ -22,6 +23,7 @@ namespace MonkeyKart.GamePlaying.Ranking
                 return;
             }
             progresses.Add(progress);
+            Log.d("Added,current count:",$"{progresses.Count}");
         }
 
         void FixedUpdate()

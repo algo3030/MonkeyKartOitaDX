@@ -6,47 +6,63 @@ using UniRx;
 using Unity.Netcode;
 using MonkeyKart.GamePlaying.Ranking;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using Unity.VisualScripting;
+using UnityEngine.Serialization;
 
 namespace MonkeyKart.GamePlaying.Debug
 {
-    public class DebugGameInitializer : MonoBehaviour
+    public class DebugGameInitializer : NetworkBehaviour
     {
-        [SerializeField] Rigidbody playerRb;
-        [SerializeField] PlayerMovement playerMovement;
-        [SerializeField] PlayerProgress playerProgress;
         [SerializeField] PlayerCamera playerCamera;
         [SerializeField] PlayerInput playerInput;
         [SerializeField] CheckpointManager cpManager;
         [SerializeField] RankingManager rankingManager;
-        [SerializeField] PlayerProgress myPlayer;
-        [SerializeField] LapDisplay lapDisplay;
-        [SerializeField] List<PlayerProgress> others;
+        [SerializeField] ProgressIndicator indicator;
+        [SerializeField] ItemManager itemManager;
+        [SerializeField] LapUI lapUI;
 
-        [SerializeField] SimpleButton startButton;
+        [SerializeField] SimpleButton startHostBtn;
+        [SerializeField] SimpleButton startClientBtn;
+        
         void Awake()
         {
-            playerMovement.Init(playerInput);
-            playerCamera.Init(playerRb);
-            playerProgress.Init(cpManager);
-            lapDisplay.Init(playerProgress);
-            
-            rankingManager.AddPlayer(myPlayer, true);
-            others.ForEach(p =>
+            startHostBtn.OnClick.Subscribe(_ =>
             {
-                p.Init(cpManager);
-                rankingManager.AddPlayer(p, false);
-            });
+                NetworkManager.Singleton.StartHost();
+            }).AddTo(this);
 
-            startButton.OnClick.Subscribe(_ =>
+            startClientBtn.OnClick.Subscribe(_ =>
             {
-                Initialize();
+                NetworkManager.Singleton.StartClient();
             }).AddTo(this);
         }
 
-        void Initialize()
+        public override void OnNetworkSpawn()
         {
-            NetworkManager.Singleton.StartHost();
+            base.OnNetworkSpawn();
+            Init().Forget();
+        }
+        
+        async UniTask Init()
+        {
+            await UniTask.Delay(1000);
+            
+            var myPlayer = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+            var playerMovement = myPlayer.GetComponent<PlayerMovement>();
+            var playerRb = myPlayer.GetComponent<Rigidbody>();
+            var playerProgress = myPlayer.GetComponent<PlayerProgress>();
+            var arrow = myPlayer.GetComponentInChildren<MovementArrow>();
+            playerMovement.Init(playerInput);
             playerMovement.enabled = true;
+            playerCamera.Init(playerRb);
+            playerCamera.enabled = true;
+            playerProgress.Init(cpManager);
+            lapUI.Init(playerProgress);
+            arrow.Init(playerInput);
+            arrow.enabled = true;
+            indicator.Init(playerProgress);
+            itemManager.Init(playerRb);
             playerCamera.enabled = true;
         }
     }

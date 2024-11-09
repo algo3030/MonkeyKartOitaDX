@@ -86,7 +86,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
 
             var connectionData = request.Payload;
             var clientId = request.ClientNetworkId;
-            // ������Ƃ���DOS�΍�
+            // ちょっとしたDOS対策
             if (connectionData.Length > MAX_CONNECT_PAYLOAD)
             {
                 response.Approved = false;

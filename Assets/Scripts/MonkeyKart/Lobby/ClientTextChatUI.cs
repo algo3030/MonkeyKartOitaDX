@@ -9,13 +9,13 @@ namespace MonkeyKart.LobbyScene
 {
     public class ClientTextChatUI : MonoBehaviour
     {
-        [Inject] ServerLobbyManager serverLobbyManager;
+        ServerLobbyManager serverLobbyManager;
         [SerializeField] TextMeshProUGUI chatTxt;
         [SerializeField] TMP_InputField inputField;
 
         private void Start()
         {
-            // ������
+            serverLobbyManager = ServerLobbyManager.I;
             chatTxt.text = string.Empty;
             foreach (var chat in serverLobbyManager.ChatTexts)
             {

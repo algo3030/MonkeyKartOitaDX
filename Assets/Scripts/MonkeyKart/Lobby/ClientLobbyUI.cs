@@ -19,7 +19,7 @@ namespace MonkeyKart.LobbyScene
         const string TAG = "ClientLobbyUIMediator";
 
         [Inject] ConnectionManager connectionManager;
-        [Inject] ServerLobbyManager serverLobbyManager;
+        ServerLobbyManager serverLobbyManager;
         [SerializeField] SimpleButton exitLobbyBtn;
         [SerializeField] TextMeshProUGUI lobbyIdTxt;
 
@@ -27,6 +27,7 @@ namespace MonkeyKart.LobbyScene
 
         void Start()
         {
+            serverLobbyManager = ServerLobbyManager.I;
             exitLobbyBtn.OnClick.Subscribe(async _ =>
             {
                 await UniTask.Delay(500);

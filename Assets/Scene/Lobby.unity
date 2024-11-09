@@ -136,8 +136,8 @@ GameObject:
   - component: {fileID: 34023915}
   - component: {fileID: 34023916}
   m_Layer: 0
-  m_Name: ServerLobbyManager
-  m_TagString: Untagged
+  m_Name: LobbyManager
+  m_TagString: LobbyManager
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -747,9 +747,9 @@ MonoBehaviour:
   autoInjectGameObjects:
   - {fileID: 404120453}
   - {fileID: 1530461989}
+  - {fileID: 34023914}
   dialogManager: {fileID: 1378321823}
   lobbyUIMediator: {fileID: 1660950922}
-  serverLobbyManager: {fileID: 34023916}
 --- !u!4 &415093823
 Transform:
   m_ObjectHideFlags: 0
