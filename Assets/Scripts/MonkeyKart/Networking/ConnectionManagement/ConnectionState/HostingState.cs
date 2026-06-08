@@ -42,7 +42,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
         public override void OnUserRequestedShutDown()
         {
             var reason = JsonUtility.ToJson(DisconnectReason.HostEndedSession);
-            // NOTE: �Ȃ�foreach�ŃG���[��
+            // NOTE: なぜかforeachでエラーになったのでforを使っている
             for (var i = owner.networkManager.ConnectedClientsIds.Count - 1; i >= 0; i--)
             {
                 var id = owner.networkManager.ConnectedClientsIds[i];
@@ -57,7 +57,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
         public override void OnClientConnected(ulong clientId)
         {
             var res = SessionManager.GetPlayerData(clientId);
-            // ��G���[
+            // 謎エラー
             res
                 .OnFailure(_ =>
                 {
@@ -69,7 +69,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
 
         public override void OnClientDisconnected(ulong clientId)
         {
-            if (clientId == owner.networkManager.LocalClientId) return; // �z�X�g�Ȃ牽�����Ȃ�
+            if (clientId == owner.networkManager.LocalClientId) return; // ホストなら何もしない
 
             Log.d(TAG, $"Player disconnected. ClientId:{clientId}");
             SessionManager.DisconnectClient(clientId);
@@ -96,7 +96,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
             var payload = System.Text.Encoding.UTF8.GetString(connectionData);
             var connectionPayload = JsonUtility.FromJson<ConnectionPayload>(payload);
 
-            // ���r�[�����b�N����Ă���
+            // ロビーがロックされている
             if (SessionManager.IsLocked)
             {
                 response.Approved = false;
@@ -105,7 +105,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
                 return;
             }
 
-            // �T�[�o�[������
+            // サーバーが満員
             if (owner.networkManager.ConnectedClientsIds.Count >= ConnectionManager.MAX_PLAYERS)
             {
                 response.Approved = false;
@@ -115,7 +115,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
             }
 
             /*
-            // �r���h�^�C�v�Ɍ݊������Ȃ�
+            // ビルドタイプに互換性がない
             if (connectionPayload.isDebug != Debug.isDebugBuild)
             {
                 response.Approved = false;

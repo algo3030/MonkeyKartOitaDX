@@ -15,14 +15,14 @@ using VContainer;
 namespace MonkeyKart.Common.UI
 {
     /// <summary>
-    /// �V���v���ȃ_�C�A���O���ADialogOptions���琶�����A�\������B
+    /// シンプルなダイアログを、DialogOptionsから生成し、表示する。
     /// </summary>
     public class AlertDialog : MonoBehaviour
     {
         /*
          * NOTE: 
-         * AddComponent���x���̂�Prefab�ɑS�Ēǉ����A�ҏW����Ƃ������j��������B
-         * �{�^�����炢�͐������Ă����������B
+         * AddComponentは遅いのでPrefabに全て追加し、編集するという方針にした。
+         * ボタンくらいは生成してもいいかもしれない。
         */
 
         [Inject] DialogSpawner owner;
@@ -37,9 +37,9 @@ namespace MonkeyKart.Common.UI
         public void Init(DialogOptions options)
         {
             var padding = options.Padding;
-            // �^�C�g��������Ȃ�A��ɒǉ��̗]����ǉ�
+            // タイトルがあるなら、上に追加の余白を追加
             if (options.Title is not NoneTitle) padding += Vector2.up * 50;
-            // �]����K�p
+            // 余白を適用
             var rect = GetComponent<RectTransform>();
             rect.offsetMin = new Vector2 (padding.x, padding.y);
             rect.offsetMax = new Vector2(-padding.x, -padding.y);

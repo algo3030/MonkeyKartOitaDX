@@ -1,4 +1,4 @@
-
+ï»¿
 using MonkeyKart.Common;
 using MonkeyKart.UnityService.Lobbies;
 using System.Collections.Generic;
@@ -39,7 +39,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
 
         public override void OnClientDisconnected(ulong _) 
         {
-            // •K‚¸©g‚Ìid‚Å‚ ‚é
+            // å¿…ãšè‡ªèº«ã®idã§ã‚ã‚‹
             var disconnectReason = owner.networkManager.DisconnectReason;
             DisconnectReason reason =
                 string.IsNullOrEmpty(disconnectReason) ?
@@ -47,7 +47,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
             StartClientFailed(reason);
         }
 
-        // TODO: ƒƒWƒbƒN‚ğ“¦‚ª‚·
+        // TODO: ãƒ­ã‚¸ãƒƒã‚¯ã‚’é€ƒãŒã™
         async void JoinLobby()
         {
             if (!AuthenticationService.Instance.IsAuthorized)
@@ -67,7 +67,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
                 {
                     clientSideLobby = new ClientSideLobby(lobby, owner);
 
-                    // ƒyƒCƒ[ƒh‚ÌƒZƒbƒgƒAƒbƒv
+                    // ãƒšã‚¤ãƒ­ãƒ¼ãƒ‰ã®ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—
                     var playerId = AuthenticationService.Instance.PlayerId;
                     var payload = JsonUtility.ToJson(new ConnectionPayload()
                     {

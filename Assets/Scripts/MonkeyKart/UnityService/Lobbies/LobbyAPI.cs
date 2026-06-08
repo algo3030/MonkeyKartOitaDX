@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+ï»¿using Cysharp.Threading.Tasks;
 using Unity.Services.Lobbies.Models;
 using MonkeyKart.Common;
 using System;
@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace MonkeyKart.UnityService.Lobbies
 {
     /// <summary>
-    /// ƒƒr[‚ÉŠÖ‚·‚éˆ—‚ğ‚Ü‚Æ‚ß‚½APIB
+    /// ãƒ­ãƒ“ãƒ¼ã«é–¢ã™ã‚‹å‡¦ç†ã‚’ã¾ã¨ã‚ãŸAPIã€‚
     /// </summary>
     public static class LobbyAPI
     {

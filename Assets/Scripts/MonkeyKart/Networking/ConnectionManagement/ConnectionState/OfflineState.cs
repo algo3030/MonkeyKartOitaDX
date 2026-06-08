@@ -7,8 +7,8 @@ using VContainer;
 namespace MonkeyKart.Networking.ConnectionManagement
 {
     /// <summary>
-    /// �I�t���C�����̃X�e�[�g�B
-    /// ���ꎞ��NetworkManager���V���b�g�_�E������B
+    /// オフライン時のステート。
+    /// 遷移時にNetworkManagerをシャットダウンする。
     /// </summary>
     public class OfflineState : ConnectionState
     {
@@ -30,7 +30,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
         {
             Log.d(TAG, $"Went to offline. Reason: {Reason}");
             owner.networkManager.Shutdown();
-            // �z�[���ȊO�ɋ���΃z�[���ɑJ��
+            // ホーム以外にいればホームに遷移
             if (SceneManager.GetActiveScene().name != MonkeyKartScenes.HOME)
             {
                 owner.sceneLoader.LoadScene(MonkeyKartScenes.HOME, useNetworkSceneManager: false);

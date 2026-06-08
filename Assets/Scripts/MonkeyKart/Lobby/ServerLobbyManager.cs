@@ -87,12 +87,12 @@ namespace MonkeyKart.LobbyScene
             Destroy(gameObject);
         }
 
-        // XXX: �����T�C�Y
+        // XXX: 固定サイズ
         [ServerRpc(RequireOwnership = false)]
         public void SendChatMessageServerRpc(string s, ServerRpcParams rpcParams = default)
         {
             ulong clientId = rpcParams.Receive.SenderClientId;
-            // �K���q�b�g����
+            // 必ずヒットする
             string senderName = string.Empty;
             foreach(var player in LobbyPlayers)
             {

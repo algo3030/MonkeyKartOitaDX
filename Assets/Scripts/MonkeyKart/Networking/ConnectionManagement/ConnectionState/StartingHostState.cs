@@ -43,7 +43,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
             CreateLobbyAndStartHost();
         }
 
-        // TODO: ���W�b�N�𓦂���
+        // TODO: ロジックを逃がす
         private async void CreateLobbyAndStartHost()
         {
             var playerId = AuthenticationService.Instance.PlayerId;
@@ -65,24 +65,24 @@ namespace MonkeyKart.Networking.ConnectionManagement
                         Log.d(TAG, $"LobbyCode: {serverSideLobby.CurrentLobby.LobbyCode}");
                         Log.d(TAG, $"LobbyName: {serverSideLobby.CurrentLobby.Name}");
 
-                        // �y�C���[�h�̃Z�b�g�A�b�v
+                        // ペイロードのセットアップ
                         var payload = JsonUtility.ToJson(new ConnectionPayload()
                         {
                             playerId = playerId,
-                            playerName = playerName, // �v���C���[�����擾
+                            playerName = playerName, // プレイヤー名を取得
                             isDebug = Debug.isDebugBuild,
                         });
                         var payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
                         owner.networkManager.NetworkConfig.ConnectionData = payloadBytes;
 
-                        // Relay�T�[�o�[�̍쐬
+                        // Relayサーバーの作成
                         Allocation hostAllocation = await RelayService.Instance.CreateAllocationAsync(ConnectionManager.MAX_PLAYERS);
                         var relayJoinCode = await RelayService.Instance.GetJoinCodeAsync(hostAllocation.AllocationId);
                         Log.d(TAG, $"server: connection data: {hostAllocation.ConnectionData[0]} {hostAllocation.ConnectionData[1]}, " +
                     $"allocation ID:{hostAllocation.AllocationId}, region:{hostAllocation.Region}");
 
 
-                        // Relay��Lobby��ڑ�
+                        // RelayとLobbyを接続
                         (await serverSideLobby.SetRelayJoinCodeAndUnlock(relayJoinCode))
                         .OnFailure(_ =>
                         {
@@ -103,14 +103,14 @@ namespace MonkeyKart.Networking.ConnectionManagement
 
 
 
-                        // Relay�̐ڑ���񂩂�UTP���Z�b�g�A�b�v
+                        // Relayの接続情報からUTPをセットアップ
                         var utp = (UnityTransport)owner.networkManager.NetworkConfig.NetworkTransport;
                         utp.SetRelayServerData(new RelayServerData(hostAllocation, ConnectionManager.CONNECTION_TYPE));
 
-                        // SessionManager���J�n
+                        // SessionManagerを開始
                         sessionManager = new SessionManager(lobbyCode: lobby.LobbyCode);
 
-                        // �z�X�g�J�n
+                        // ホスト開始
                         if (!owner.networkManager.StartHost())
                         {
                             StartHostFailed(DisconnectReason.Generic);

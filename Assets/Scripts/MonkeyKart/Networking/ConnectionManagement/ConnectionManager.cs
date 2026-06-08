@@ -20,7 +20,7 @@ using static UnityEngine.UI.GridLayoutGroup;
 namespace MonkeyKart.Networking.ConnectionManagement
 {
     /// <summary>
-    /// ConnectionState�̃X�e�[�g�}�V��
+    /// ConnectionStateのステートマシン
     /// </summary>
     public class ConnectionManager : MonoBehaviour
     {
@@ -39,7 +39,7 @@ namespace MonkeyKart.Networking.ConnectionManagement
             DontDestroyOnLoad(gameObject);
         }
 
-        // �F�؂𑖂点��
+        // 認証を走らせる
         public async UniTask<Result<Unit, string>> Initialize()
         {
             var authRes = await AuthAPI.InitializeAndSignInAsync();

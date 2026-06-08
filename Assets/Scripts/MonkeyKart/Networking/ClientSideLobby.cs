@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+ï»¿using Cysharp.Threading.Tasks;
 using MonkeyKart.Common;
 using MonkeyKart.Networking.ConnectionManagement;
 using MonkeyKart.UnityService;
@@ -127,7 +127,7 @@ namespace MonkeyKart.Networking
 
                 foreach(var player in CurrentLobby.Players)
                 {
-                    // ƒzƒXƒg‚Ì‘¶İŠm”F
+                    // ãƒ›ã‚¹ãƒˆã®å­˜åœ¨ç¢ºèª
                     if (player.Id == CurrentLobby.HostId) return;
                     OnLobbyDisconnected(DisconnectReason.HostEndedSession);
                 }
